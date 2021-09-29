@@ -63,3 +63,35 @@ class QvaPayApiClient extends QvaPayApi {
     throw ServerException();
   }
 
+  @override
+  Future<String> signIn({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '${QvaPayApi.baseUrl}/register',
+      );
+      if (response.statusCode != 200) {
+        throw RegisterException(
+            error: (response.data! as Map<String, List<String>>)['errors']![0]);
+      }
+      final data = response.data;
+
+      if (data != null && data.isNotEmpty) {
+        final dataMap = Map<String, String>.from(data);
+        if (dataMap.containsKey('token')) {
+          final token = dataMap['token'];
+          await _storage.save(token!);
+          return Future.value(token);
+        }
+        throw RegisterException(
+            error: (data as Map<String, List<String>>)['errors']![0]);
+      }
+    } on DioError catch (_) {
+      throw RegisterException();
+    }
+    throw RegisterException();
+  }
+}

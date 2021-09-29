@@ -155,5 +155,62 @@ void main() {
       );
     });
 
+    group('signin', () {
+      test('should return a token when registration is completed successfully.',
+          () async {
+        when(() => mockStorage.save(tToken)).thenAnswer((_) async => true);
+        when(() => mockDio.post<Map<String, dynamic>>(
+              '${QvaPayApi.baseUrl}/register',
+              data: any<Map<String, String>>(named: 'data'),
+            )).thenAnswer((_) async => Response(
+              data: tLoginResponse,
+              statusCode: 200,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/register',
+              ),
+            ));
+
+        final response = await apiClient.signIn(
+          name: 'Erich García Cruz',
+          email: 'erich@qvapay.com',
+          password: 'test',
+        );
+
+        expect(response, tToken);
+        verify(() => mockStorage.save(tToken)).called(1);
+      });
+
+      test(
+          'should throws a [RegisterException] when is already registered. '
+          'or an error occurs', () async {
+        when(() => mockDio.post<Map<String, dynamic>>(
+              '${QvaPayApi.baseUrl}/register',
+              data: any<Map<String, String>>(named: 'data'),
+            )).thenAnswer((_) async => Response(
+              data: const <String, List<String>>{
+                'errors': ['El valor del campo email ya está en uso.']
+              },
+              statusCode: 422,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/register',
+              ),
+            ));
+
+        expect(
+          () => apiClient.signIn(
+            name: 'Erich García Cruz',
+            email: 'erich@qvapay.com',
+            password: 'test',
+          ),
+          throwsA(isA<RegisterException>().having(
+            (e) => e.error,
+            'El valor del campo email ya está en uso.',
+            isNotNull,
+          )),
+        );
+        verifyZeroInteractions(mockStorage);
+      });
+    });
+
     });
 }
