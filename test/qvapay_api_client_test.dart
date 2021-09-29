@@ -212,5 +212,52 @@ void main() {
       });
     });
 
+    group('logout', () {
+      test('when is successfully', () async {
+        when(() => mockStorage.delete()).thenAnswer((_) async => true);
+        when(() => mockDio.get<String>(
+              '${QvaPayApi.baseUrl}/logout',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => Response(
+              data: '<html>',
+              statusCode: 200,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/logout',
+              ),
+            ));
+
+        try {
+          await apiClient.logOut();
+        } catch (_) {
+          verify(
+            () async => mockDio.get<String>(
+              '${QvaPayApi.baseUrl}/logout',
+              options: any(named: 'options'),
+            ),
+          ).called(1);
+          verify(() => mockStorage.delete()).called(1);
+        }
+      });
+
+      test('should throw a [ServerException] when ocures a error', () async {
+        when(() => mockDio.get<String>(
+              '${QvaPayApi.baseUrl}/logout',
+              options: any(named: 'options'),
+            )).thenThrow(DioError(
+          requestOptions: RequestOptions(
+            path: '${QvaPayApi.baseUrl}/logout',
+          ),
+        ));
+
+        expect(() => apiClient.logOut(), throwsA(isA<ServerException>()));
+
+        verify(
+          () => mockDio.get<String>(
+            '${QvaPayApi.baseUrl}/logout',
+            options: any(named: 'options'),
+          ),
+        ).called(1);
+        verifyZeroInteractions(mockStorage);
+      });
     });
 }

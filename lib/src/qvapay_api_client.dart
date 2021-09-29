@@ -64,6 +64,24 @@ class QvaPayApiClient extends QvaPayApi {
   }
 
   @override
+  Future<void> logOut() async {
+    try {
+      final response = await _dio.get<String>(
+        '${QvaPayApi.baseUrl}/logout',
+        options: _authorizationHeader(),
+      );
+
+      if (response.statusCode == 200) {
+        await _storage.delete();
+      }
+
+      if (response.statusCode != 200) throw ServerException();
+    } on DioError catch (_) {
+      throw ServerException();
+    }
+  }
+
+  @override
   Future<String> signIn({
     required String name,
     required String email,
@@ -93,5 +111,11 @@ class QvaPayApiClient extends QvaPayApi {
       throw RegisterException();
     }
     throw RegisterException();
+  }
+  Options _authorizationHeader() {
+    return Options(headers: <String, dynamic>{
+      'Authorization': 'Bearer $_accessToken',
+      'accept': 'application/json',
+    });
   }
 }
