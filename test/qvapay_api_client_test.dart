@@ -1,4 +1,3 @@
-// ignore_for_file: prefer_const_constructors
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -20,18 +19,23 @@ void main() {
   late QvaPayApi apiClient;
   late MockOAuthStorage mockStorage;
 
-  setUp(() {
-    mockDio = MockDio();
-    mockStorage = MockOAuthStorage();
-    apiClient = QvaPayApiClient(mockDio, mockStorage);
-  });
-
   final tLoginResponse =
       json.decode(fixture('login.json')) as Map<String, dynamic>;
 
   final tToken = tLoginResponse['token'] as String;
 
   final tMeResponse = json.decode(fixture('me.json')) as Map<String, dynamic>;
+
+  setUp(() {
+    mockDio = MockDio();
+    mockStorage = MockOAuthStorage();
+    when(() => mockStorage.feach()).thenAnswer((_) async => tToken);
+    apiClient = QvaPayApiClient(mockDio, mockStorage);
+  });
+
+  setUpAll(() {});
+
+  group('Storage', () {});
 
   group('authentication', () {
     group('login', () {
@@ -77,7 +81,7 @@ void main() {
             ),
           ),
         );
-        verifyZeroInteractions(mockStorage);
+        verify(() => mockStorage.feach()).called(1);
       });
       test(
         'should throw a [AuthenticateException] when the email is incorrect',
@@ -101,7 +105,7 @@ void main() {
                   equals('User does not exist'),
                 ),
               ));
-          verifyZeroInteractions(mockStorage);
+          verify(() => mockStorage.feach()).called(1);
         },
       );
       test(
@@ -128,7 +132,7 @@ void main() {
                   equals('El campo email es obligatorio.'),
                 ),
               ));
-          verifyZeroInteractions(mockStorage);
+          verify(() => mockStorage.feach()).called(1);
         },
       );
 
@@ -208,7 +212,7 @@ void main() {
             isNotNull,
           )),
         );
-        verifyZeroInteractions(mockStorage);
+        verify(() => mockStorage.feach()).called(1);
       });
     });
 
@@ -257,7 +261,7 @@ void main() {
             options: any(named: 'options'),
           ),
         ).called(1);
-        verifyZeroInteractions(mockStorage);
+        verify(() => mockStorage.feach()).called(1);
       });
     });
   });

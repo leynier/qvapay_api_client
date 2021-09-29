@@ -11,10 +11,10 @@ class QvaPayApiClient extends QvaPayApi {
   /// {@macro qvapay_api_client}
   QvaPayApiClient(
     Dio dio,
-    OAuthStorage storage,
+    OAuthStorage? storage,
   )   : _dio = dio,
-        _storage = storage {
-    storage.feach().then((value) => _accessToken = value ?? '');
+        _storage = storage ?? OAuthMemoryStorage() {
+    _storage.feach().then((value) => _accessToken = value ?? '');
   }
 
   final Dio _dio;
