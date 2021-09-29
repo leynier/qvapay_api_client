@@ -260,4 +260,25 @@ void main() {
         verifyZeroInteractions(mockStorage);
       });
     });
+  });
+
+  group('getUserData', () {
+    final tMeModel = Me.fromJson(tMeResponse);
+    test('should return a [Me] successfully', () async {
+      when(() => mockDio.get<Map<String, dynamic>>(
+            '${QvaPayApi.baseUrl}/me',
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: tMeResponse,
+            statusCode: 200,
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/me',
+            ),
+          ));
+
+      final response = await apiClient.getUserData();
+
+      expect(response, tMeModel);
+    });
+  });
 }

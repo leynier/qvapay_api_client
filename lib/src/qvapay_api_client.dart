@@ -112,6 +112,28 @@ class QvaPayApiClient extends QvaPayApi {
     }
     throw RegisterException();
   }
+
+  @override
+  Future<Me> getUserData() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '${QvaPayApi.baseUrl}/me',
+        options: _authorizationHeader(),
+      );
+
+      if (response.statusCode != 200) throw ServerException();
+
+      final data = response.data;
+
+      if (data != null && data.isNotEmpty) {
+        return Me.fromJson(data);
+      }
+    } on DioError catch (_) {
+      throw ServerException();
+    }
+    throw ServerException();
+  }
+
   Options _authorizationHeader() {
     return Options(headers: <String, dynamic>{
       'Authorization': 'Bearer $_accessToken',
