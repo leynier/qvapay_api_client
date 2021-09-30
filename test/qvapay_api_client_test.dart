@@ -24,6 +24,9 @@ void main() {
 
   final tToken = tLoginResponse['token'] as String;
 
+  final tSigninResponse =
+      json.decode(fixture('signin.json')) as Map<String, dynamic>;
+
   final tMeResponse = json.decode(fixture('me.json')) as Map<String, dynamic>;
 
   setUp(() {
@@ -52,7 +55,7 @@ void main() {
               ),
             ));
 
-        final response = await apiClient.login('test@qvapay.com', 'sqp');
+        final response = await apiClient.logIn('test@qvapay.com', 'sqp');
 
         verify(() => mockStorage.save(response)).called(1);
         expect(response, tToken);
@@ -63,16 +66,22 @@ void main() {
         when(() => mockDio.post<Map<String, dynamic>>(
               '${QvaPayApi.baseUrl}/login',
               data: any<Map<String, String>>(named: 'data'),
-            )).thenAnswer((_) async => Response(
-              data: const <String, String>{'message': 'Password mismatch'},
-              statusCode: 422,
-              requestOptions: RequestOptions(
-                path: '${QvaPayApi.baseUrl}/login',
-              ),
-            ));
+            )).thenThrow(DioError(
+          response: Response<Map<String, dynamic>>(
+            data: const <String, String>{'message': 'Password mismatch'},
+            statusCode: 422,
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/login',
+            ),
+          ),
+          requestOptions: RequestOptions(
+            path: '${QvaPayApi.baseUrl}/login',
+          ),
+          error: DioErrorType.response,
+        ));
 
         expect(
-          () => apiClient.login('test@qvapay.com', '?'),
+          () => apiClient.logIn('test@qvapay.com', '?'),
           throwsA(
             isA<AuthenticateException>().having(
               (e) => e.error,
@@ -89,15 +98,22 @@ void main() {
           when(() => mockDio.post<Map<String, dynamic>>(
                 '${QvaPayApi.baseUrl}/login',
                 data: any<Map<String, String>>(named: 'data'),
-              )).thenAnswer((_) async => Response(
-                data: const <String, String>{'message': 'User does not exist'},
-                statusCode: 422,
-                requestOptions: RequestOptions(
-                  path: '${QvaPayApi.baseUrl}/login',
-                ),
-              ));
+              )).thenThrow(DioError(
+            response: Response<Map<String, dynamic>>(
+              data: const <String, String>{'message': 'User does not exist'},
+              statusCode: 422,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/login',
+              ),
+            ),
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/login',
+            ),
+            error: DioErrorType.response,
+          ));
+
           expect(
-              () => apiClient.login('test@qvapay.com', 'sqp'),
+              () => apiClient.logIn('test@qvapay.com', 'sqp'),
               throwsA(
                 isA<AuthenticateException>().having(
                   (e) => e.error,
@@ -114,17 +130,24 @@ void main() {
           when(() => mockDio.post<Map<String, dynamic>>(
                 '${QvaPayApi.baseUrl}/login',
                 data: any<Map<String, String>>(named: 'data'),
-              )).thenAnswer((_) async => Response(
-                data: const <String, List<String>>{
-                  'errors': ['El campo email es obligatorio.']
-                },
-                statusCode: 422,
-                requestOptions: RequestOptions(
-                  path: '${QvaPayApi.baseUrl}/login',
-                ),
-              ));
+              )).thenThrow(DioError(
+            response: Response<Map<String, dynamic>>(
+              data: const <String, List<String>>{
+                'errors': ['El campo email es obligatorio.']
+              },
+              statusCode: 422,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/login',
+              ),
+            ),
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/login',
+            ),
+            error: DioErrorType.response,
+          ));
+
           expect(
-              () => apiClient.login(' ', 'sqp'),
+              () => apiClient.logIn(' ', 'sqp'),
               throwsA(
                 isA<AuthenticateException>().having(
                   (e) => e.error,
@@ -137,22 +160,27 @@ void main() {
       );
 
       test(
-        'should throw a [ServerException] when the response code is not 200',
+        'should throw a [ServerException] when the statusCode '
+        'is not 200 or 422',
         () async {
           when(() => mockDio.post<Map<String, dynamic>>(
                 '${QvaPayApi.baseUrl}/login',
                 data: any<Map<String, String>>(named: 'data'),
-              )).thenAnswer((_) async => Response(
-                data: const <String, List<String>>{
-                  'errors': ['El campo email es obligatorio.']
-                },
-                statusCode: 500,
-                requestOptions: RequestOptions(
-                  path: '${QvaPayApi.baseUrl}/login',
-                ),
-              ));
+              )).thenThrow(DioError(
+            response: Response<Map<String, dynamic>>(
+              statusCode: 500,
+              requestOptions: RequestOptions(
+                path: '${QvaPayApi.baseUrl}/login',
+              ),
+            ),
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/login',
+            ),
+            error: DioErrorType.response,
+          ));
+
           expect(
-            () => apiClient.login(' ', 'sqp'),
+            () => apiClient.logIn('erich@qvapay.com', 'sqp'),
             throwsA(isA<ServerException>()),
           );
         },
@@ -160,57 +188,98 @@ void main() {
     });
 
     group('signin', () {
-      test('should return a token when registration is completed successfully.',
-          () async {
-        when(() => mockStorage.save(tToken)).thenAnswer((_) async => true);
+      const tDataRegister = {
+        'name': 'Erich García Cruz',
+        'email': 'erich@qvapay.com',
+        'password': 'test',
+      };
+      test(
+          'should return the `statusCode 200` when registration is '
+          'successfully completed.', () async {
         when(() => mockDio.post<Map<String, dynamic>>(
               '${QvaPayApi.baseUrl}/register',
-              data: any<Map<String, String>>(named: 'data'),
+              data: tDataRegister,
             )).thenAnswer((_) async => Response(
-              data: tLoginResponse,
+              data: tSigninResponse,
               statusCode: 200,
               requestOptions: RequestOptions(
                 path: '${QvaPayApi.baseUrl}/register',
               ),
             ));
 
-        final response = await apiClient.signIn(
-          name: 'Erich García Cruz',
-          email: 'erich@qvapay.com',
-          password: 'test',
+        await apiClient.signIn(
+          name: tDataRegister['name']!,
+          email: tDataRegister['email']!,
+          password: tDataRegister['password']!,
         );
 
-        expect(response, tToken);
-        verify(() => mockStorage.save(tToken)).called(1);
+        verify(() => mockDio.post<Map<String, dynamic>>(
+              '${QvaPayApi.baseUrl}/register',
+              data: tDataRegister,
+            )).called(1);
       });
 
-      test(
-          'should throws a [RegisterException] when is already registered. '
-          'or an error occurs', () async {
+      test('should throws a [RegisterException] when is already registered.',
+          () async {
         when(() => mockDio.post<Map<String, dynamic>>(
               '${QvaPayApi.baseUrl}/register',
-              data: any<Map<String, String>>(named: 'data'),
-            )).thenAnswer((_) async => Response(
-              data: const <String, List<String>>{
-                'errors': ['El valor del campo email ya está en uso.']
-              },
-              statusCode: 422,
-              requestOptions: RequestOptions(
-                path: '${QvaPayApi.baseUrl}/register',
-              ),
-            ));
+              data: tDataRegister,
+            )).thenThrow(DioError(
+          response: Response<Map<String, dynamic>>(
+            data: const <String, List<dynamic>>{
+              'errors': <String>['El valor del campo email ya está en uso.']
+            },
+            statusCode: 422,
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/register',
+            ),
+          ),
+          requestOptions: RequestOptions(
+            path: '${QvaPayApi.baseUrl}/register',
+          ),
+          error: DioErrorType.response,
+        ));
 
         expect(
           () => apiClient.signIn(
-            name: 'Erich García Cruz',
-            email: 'erich@qvapay.com',
-            password: 'test',
+            name: tDataRegister['name']!,
+            email: tDataRegister['email']!,
+            password: tDataRegister['password']!,
           ),
           throwsA(isA<RegisterException>().having(
             (e) => e.error,
             'El valor del campo email ya está en uso.',
             isNotNull,
           )),
+        );
+        verify(() => mockStorage.feach()).called(1);
+      });
+      test(
+          'should throws a [ServerException] when the statusCode '
+          'is not 200 or 422', () async {
+        when(() => mockDio.post<Map<String, dynamic>>(
+              '${QvaPayApi.baseUrl}/register',
+              data: tDataRegister,
+            )).thenThrow(DioError(
+          response: Response<Map<String, dynamic>>(
+            statusCode: 500,
+            requestOptions: RequestOptions(
+              path: '${QvaPayApi.baseUrl}/register',
+            ),
+          ),
+          requestOptions: RequestOptions(
+            path: '${QvaPayApi.baseUrl}/register',
+          ),
+          error: DioErrorType.response,
+        ));
+
+        expect(
+          () => apiClient.signIn(
+            name: tDataRegister['name']!,
+            email: tDataRegister['email']!,
+            password: tDataRegister['password']!,
+          ),
+          throwsA(isA<ServerException>()),
         );
         verify(() => mockStorage.feach()).called(1);
       });
@@ -230,20 +299,18 @@ void main() {
               ),
             ));
 
-        try {
-          await apiClient.logOut();
-        } catch (_) {
-          verify(
-            () async => mockDio.get<String>(
-              '${QvaPayApi.baseUrl}/logout',
-              options: any(named: 'options'),
-            ),
-          ).called(1);
-          verify(() => mockStorage.delete()).called(1);
-        }
+        await apiClient.logOut();
+
+        verify(
+          () => mockDio.get<String>(
+            '${QvaPayApi.baseUrl}/logout',
+            options: any(named: 'options'),
+          ),
+        ).called(1);
+        verify(() => mockStorage.delete()).called(1);
       });
 
-      test('should throw a [ServerException] when ocures a error', () async {
+      test('should throw a [ServerException] when an error occurs', () async {
         when(() => mockDio.get<String>(
               '${QvaPayApi.baseUrl}/logout',
               options: any(named: 'options'),
@@ -283,6 +350,32 @@ void main() {
       final response = await apiClient.getUserData();
 
       expect(response, tMeModel);
+    });
+
+    test(
+        'should throw a [UnauthorizedException] when you are not '
+        'authenticated on the platform.', () async {
+      when(() => mockDio.get<Map<String, dynamic>>(
+            '${QvaPayApi.baseUrl}/me',
+            options: any(named: 'options'),
+          )).thenThrow(DioError(
+        response: Response<Map<String, dynamic>>(
+          data: <String, String>{'message': 'Unauthenticated.'},
+          statusCode: 401,
+          requestOptions: RequestOptions(
+            path: '${QvaPayApi.baseUrl}/me',
+          ),
+        ),
+        requestOptions: RequestOptions(
+          path: '${QvaPayApi.baseUrl}/me',
+        ),
+        error: DioErrorType.response,
+      ));
+      expect(
+          () async => apiClient.getUserData(),
+          throwsA(
+            isA<UnauthorizedException>(),
+          ));
     });
   });
 }

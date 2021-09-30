@@ -1,0 +1,11 @@
+{
+  "token": {
+    "name": "QvaPay APP Register",
+    "abilities": ["*"],
+    "tokenable_id": 42074,
+    "tokenable_type": "App\\User",
+    "updated_at": "2021-09-29T20:06:18.000000Z",
+    "created_at": "2021-09-29T20:06:18.000000Z",
+    "id": 14
+  }
+}
