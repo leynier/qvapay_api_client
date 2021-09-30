@@ -10,9 +10,9 @@ import 'package:qvapay_api_client/src/qvapay_api.dart';
 class QvaPayApiClient extends QvaPayApi {
   /// {@macro qvapay_api_client}
   QvaPayApiClient(
-    Dio dio,
+    Dio dio, [
     OAuthStorage? storage,
-  )   : _dio = dio,
+  ])  : _dio = dio,
         _storage = storage ?? OAuthMemoryStorage() {
     _storage.feach().then((value) => _accessToken = value ?? '');
   }
@@ -22,7 +22,7 @@ class QvaPayApiClient extends QvaPayApi {
   final OAuthStorage _storage;
 
   @override
-  Future<String> login(String email, String password) async {
+  Future<String> logIn(String email, String password) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '${QvaPayApi.baseUrl}/login',
@@ -32,31 +32,32 @@ class QvaPayApiClient extends QvaPayApi {
         },
       );
 
-      if (response.statusCode == 422) {
-        final data = response.data!;
-        if (data.keys.contains('message')) {
-          throw AuthenticateException(
-              error: (response.data! as Map<String, String>)['message']);
-        } else {
-          throw AuthenticateException(
-              error:
-                  (response.data! as Map<String, List<String>>)['errors']![0]);
-        }
-      }
-      if (response.statusCode != 200) throw ServerException();
-
       final data = response.data;
 
       if (data != null && data.isNotEmpty) {
         final dataMap = Map<String, String>.from(data);
         if (dataMap.containsKey('token')) {
           final token = dataMap['token'];
-          await _storage.save(token!);
+          _accessToken = token!;
+          await _storage.save(token);
           return Future.value(token);
         }
         throw AuthenticateException();
       }
-    } on DioError catch (_) {
+    } on DioError catch (e) {
+      if (e.response!.statusCode == 422) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.keys.contains('message')) {
+          throw AuthenticateException(
+              error: (e.response!.data! as Map<String, String>)['message']);
+        } else {
+          final errors = data
+              .cast<String, List<dynamic>>()
+              .map((key, value) => MapEntry(key, value.cast<String>()));
+
+          throw AuthenticateException(error: errors['errors']!.join(' '));
+        }
+      }
       throw ServerException();
     }
 
@@ -68,7 +69,7 @@ class QvaPayApiClient extends QvaPayApi {
     try {
       final response = await _dio.get<String>(
         '${QvaPayApi.baseUrl}/logout',
-        options: _authorizationHeader(),
+        // options: _authorizationHeader(),
       );
 
       if (response.statusCode == 200) {
@@ -82,35 +83,31 @@ class QvaPayApiClient extends QvaPayApi {
   }
 
   @override
-  Future<String> signIn({
+  Future<void> signIn({
     required String name,
     required String email,
     required String password,
   }) async {
     try {
-      final response = await _dio.post<Map<String, dynamic>>(
+      await _dio.post<Map<String, dynamic>>(
         '${QvaPayApi.baseUrl}/register',
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+        },
       );
-      if (response.statusCode != 200) {
-        throw RegisterException(
-            error: (response.data! as Map<String, List<String>>)['errors']![0]);
-      }
-      final data = response.data;
+    } on DioError catch (e) {
+      if (e.response!.statusCode == 422) {
+        final data = e.response!.data as Map<String, dynamic>;
+        final err = data
+            .cast<String, List<dynamic>>()
+            .map((key, value) => MapEntry(key, value.cast<String>()));
 
-      if (data != null && data.isNotEmpty) {
-        final dataMap = Map<String, String>.from(data);
-        if (dataMap.containsKey('token')) {
-          final token = dataMap['token'];
-          await _storage.save(token!);
-          return Future.value(token);
-        }
-        throw RegisterException(
-            error: (data as Map<String, List<String>>)['errors']![0]);
+        throw RegisterException(error: err['errors']!.join(' '));
       }
-    } on DioError catch (_) {
-      throw RegisterException();
+      throw ServerException();
     }
-    throw RegisterException();
   }
 
   @override
@@ -121,14 +118,13 @@ class QvaPayApiClient extends QvaPayApi {
         options: _authorizationHeader(),
       );
 
-      if (response.statusCode != 200) throw ServerException();
-
       final data = response.data;
 
       if (data != null && data.isNotEmpty) {
         return Me.fromJson(data);
       }
-    } on DioError catch (_) {
+    } on DioError catch (e) {
+      if (e.response!.statusCode == 401) throw UnauthorizedException();
       throw ServerException();
     }
     throw ServerException();
@@ -136,8 +132,8 @@ class QvaPayApiClient extends QvaPayApi {
 
   Options _authorizationHeader() {
     return Options(headers: <String, dynamic>{
-      'Authorization': 'Bearer $_accessToken',
       'accept': 'application/json',
+      'Authorization': 'Bearer $_accessToken',
     });
   }
 }

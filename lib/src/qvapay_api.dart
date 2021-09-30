@@ -8,13 +8,13 @@ abstract class QvaPayApi {
   static const String baseUrl = 'https://qvapay.com/api/app';
 
   /// Authentication on the `QvaPay` platform.
-  Future<String> login(String email, String password);
+  Future<String> logIn(String email, String password);
 
   /// Logout the `QvaPay` platform.
   Future<void> logOut();
 
   /// Create a new user on the `QvaPay` platform.
-  Future<String> signIn({
+  Future<void> signIn({
     required String name,
     required String email,
     required String password,
