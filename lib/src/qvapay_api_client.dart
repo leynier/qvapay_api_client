@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:qvapay_api_client/src/exception.dart';
 import 'package:qvapay_api_client/src/models/me.dart';
-
 import 'package:qvapay_api_client/src/qvapay_api.dart';
 
 /// {@template qvapay_api_client}
@@ -14,7 +13,7 @@ class QvaPayApiClient extends QvaPayApi {
     OAuthStorage? storage,
   ])  : _dio = dio,
         _storage = storage ?? OAuthMemoryStorage() {
-    _storage.feach().then((value) => _accessToken = value ?? '');
+    _storage.fetch().then((value) => _accessToken = value ?? '');
   }
 
   final Dio _dio;
@@ -22,7 +21,10 @@ class QvaPayApiClient extends QvaPayApi {
   final OAuthStorage _storage;
 
   @override
-  Future<String> logIn(String email, String password) async {
+  Future<String> logIn({
+    required String email,
+    required String password,
+  }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '${QvaPayApi.baseUrl}/login',
@@ -83,7 +85,7 @@ class QvaPayApiClient extends QvaPayApi {
   }
 
   @override
-  Future<void> signIn({
+  Future<void> register({
     required String name,
     required String email,
     required String password,
