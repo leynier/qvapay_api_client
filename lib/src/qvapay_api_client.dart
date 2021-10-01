@@ -12,12 +12,10 @@ class QvaPayApiClient extends QvaPayApi {
     Dio dio, [
     OAuthStorage? storage,
   ])  : _dio = dio,
-        _storage = storage ?? OAuthMemoryStorage() {
-    _storage.fetch().then((value) => _accessToken = value ?? '');
-  }
+        _storage = storage ?? OAuthMemoryStorage();
 
   final Dio _dio;
-  String _accessToken = '';
+  String? _accessToken;
   final OAuthStorage _storage;
 
   @override
@@ -40,9 +38,9 @@ class QvaPayApiClient extends QvaPayApi {
         final dataMap = Map<String, String>.from(data);
         if (dataMap.containsKey('token')) {
           final token = dataMap['token'];
-          _accessToken = token!;
-          await _storage.save(token);
-          return Future.value(token);
+          _accessToken = token;
+          await _storage.save(token!);
+          return token;
         }
         throw AuthenticateException();
       }
@@ -117,7 +115,7 @@ class QvaPayApiClient extends QvaPayApi {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '${QvaPayApi.baseUrl}/me',
-        options: _authorizationHeader(),
+        options: await _authorizationHeader(),
       );
 
       final data = response.data;
@@ -132,7 +130,8 @@ class QvaPayApiClient extends QvaPayApi {
     throw ServerException();
   }
 
-  Options _authorizationHeader() {
+  Future<Options> _authorizationHeader() async {
+    _accessToken ??= await _storage.fetch();
     return Options(headers: <String, dynamic>{
       'accept': 'application/json',
       'Authorization': 'Bearer $_accessToken',
