@@ -93,7 +93,8 @@ void main() {
             ),
           ),
         );
-        verify(() => mockStorage.fetch()).called(1);
+        // TODO: Comment this verify because fetch in login is not required
+        // verify(() => mockStorage.fetch()).called(1);
       });
       test(
         'should throw a [AuthenticateException] when the email is incorrect',
@@ -124,7 +125,8 @@ void main() {
                   equals('User does not exist'),
                 ),
               ));
-          verify(() => mockStorage.fetch()).called(1);
+          // TODO: Comment this verify because fetch in login is not required
+          // verify(() => mockStorage.fetch()).called(1);
         },
       );
       test(
@@ -158,7 +160,8 @@ void main() {
                   equals('El campo email es obligatorio.'),
                 ),
               ));
-          verify(() => mockStorage.fetch()).called(1);
+          // TODO: Comment this verify because fetch in login is not required
+          // verify(() => mockStorage.fetch()).called(1);
         },
       );
 
@@ -190,7 +193,7 @@ void main() {
       );
     });
 
-    group('signin', () {
+    group('register', () {
       const tDataRegister = {
         'name': 'Erich García Cruz',
         'email': 'erich@qvapay.com',
@@ -255,7 +258,8 @@ void main() {
             isNotNull,
           )),
         );
-        verify(() => mockStorage.fetch()).called(1);
+        // TODO: Comment this verify because fetch in register is not required
+        // verify(() => mockStorage.fetch()).called(1);
       });
       test(
           'should throws a [ServerException] when the statusCode '
@@ -284,7 +288,8 @@ void main() {
           ),
           throwsA(isA<ServerException>()),
         );
-        verify(() => mockStorage.fetch()).called(1);
+        // TODO: Comment this verify because fetch in register is not required
+        // verify(() => mockStorage.fetch()).called(1);
       });
     });
 
@@ -331,7 +336,8 @@ void main() {
             options: any(named: 'options'),
           ),
         ).called(1);
-        verify(() => mockStorage.fetch()).called(1);
+        // TODO: Comment this verify because fetch in logout is not required
+        // verify(() => mockStorage.fetch()).called(1);
       });
     });
   });
