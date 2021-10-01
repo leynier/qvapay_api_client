@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:qvapay_api_client/qvapay_api_client.dart';
 import 'package:qvapay_api_client/src/exception.dart';
 import 'package:qvapay_api_client/src/models/me.dart';
 import 'package:qvapay_api_client/src/qvapay_api.dart';
 import 'package:test/test.dart';
-import 'package:qvapay_api_client/qvapay_api_client.dart';
 
 import 'fixtures/fixture_adapter.dart';
 

@@ -1,8 +1,7 @@
 // ignore_for_file: public_member_api_docs
 import 'package:equatable/equatable.dart';
-import 'package:qvapay_api_client/src/models/service.dart';
-
 import 'package:qvapay_api_client/src/extension/date_extension.dart';
+import 'package:qvapay_api_client/src/models/service.dart';
 
 class ServiceBuy extends Equatable {
   const ServiceBuy({

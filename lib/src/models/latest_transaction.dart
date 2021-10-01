@@ -1,12 +1,11 @@
 // ignore_for_file: public_member_api_docs
 import 'package:equatable/equatable.dart';
-
+import 'package:qvapay_api_client/src/extension/date_extension.dart';
 import 'package:qvapay_api_client/src/models/app.dart';
 import 'package:qvapay_api_client/src/models/owner.dart';
 import 'package:qvapay_api_client/src/models/paid_by.dart';
 import 'package:qvapay_api_client/src/models/service_buy.dart';
 import 'package:qvapay_api_client/src/models/wallet.dart';
-import 'package:qvapay_api_client/src/extension/date_extension.dart';
 
 class LatestTransaction extends Equatable {
   const LatestTransaction({
